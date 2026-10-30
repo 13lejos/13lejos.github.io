@@ -96,26 +96,31 @@ body {
 /* No double-tap zoom, pinch zoom, text selection or tap flashes anywhere. */
 html, body { touch-action: none; -webkit-user-select: none; user-select: none;
   -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+/* Shell colors: Atomic Purple by default. Change these to recolor the controller. */
+#gameboy { --shell-top: #8a6ad6; --shell-bottom: #5b3fa8; --shell-glow: rgba(214, 190, 255, 0.35);
+  --ink: #f1eaff; --well: #4a3290; --well-light: #6c52b8; --pill: #3e2a78; --pill-edge: #2a1b56; }
 #gameboy { display: none; position: fixed; left: 0; right: 0; bottom: 0; overflow: hidden;
-  background: linear-gradient(180deg, #dcd8e4 0%, #c6c1d2 100%);
+  background: radial-gradient(120% 60% at 30% 0%, var(--shell-glow), transparent 60%),
+    linear-gradient(170deg, var(--shell-top) 0%, var(--shell-bottom) 100%);
   box-shadow: inset 0 6px 10px -6px rgba(0,0,0,0.45);
   touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
 body.gameboy-mode #gameboy { display: block; }
-.gb-label { position: absolute; pointer-events: none; transform: translateX(-50%); color: #4b3f72; white-space: nowrap;
+.gb-label { position: absolute; pointer-events: none; transform: translateX(-50%); color: var(--ink); white-space: nowrap;
   font-weight: 800; letter-spacing: 2px; font-size: 12px; }
-#gb-brand { position: absolute; pointer-events: none; transform: translateX(-50%); color: #4b3f72; white-space: nowrap;
-  font-weight: 800; font-style: italic; letter-spacing: 3px; opacity: 0.75; }
+#gb-brand { position: absolute; pointer-events: none; transform: translateX(-50%); color: var(--ink); white-space: nowrap;
+  font-weight: 800; font-style: italic; letter-spacing: 2px; opacity: 0.9; text-shadow: 0 2px 0 rgba(0,0,0,0.2); }
 /* Thumbstick: fixed in the top-left quarter. */
 #gb-stick-zone { position: absolute; left: 0; top: 0; }
 #gb-stick-base { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none;
-  background: radial-gradient(circle at 50% 45%, #b9b3c6, #9f98b0);
-  box-shadow: inset 0 4px 12px rgba(0,0,0,0.3), 0 2px 0 rgba(255,255,255,0.7); }
+  background: radial-gradient(circle at 50% 45%, var(--well-light), var(--well));
+  box-shadow: inset 0 4px 12px rgba(0,0,0,0.35), 0 2px 0 rgba(255,255,255,0.25); }
 #gb-stick-knob { position: absolute; left: 50%; top: 50%; width: 48%; height: 48%; margin: -24% 0 0 -24%;
   border-radius: 50%; background: radial-gradient(circle at 40% 35%, #5f586e, #2f2a3a);
   box-shadow: 0 5px 8px rgba(0,0,0,0.35); }
 /* D-pad: a plus shape. */
 #gb-dpad { position: absolute; transform: translate(-50%, -50%); }
+#gb-dpad::before { content: ''; position: absolute; inset: -30px; border-radius: 50%; }  /* Forgiving touch area. */
 #gb-dpad .bar { position: absolute; background: #35303f; border-radius: 7px;
   box-shadow: 0 5px 0 #1f1b26, 0 8px 12px rgba(0,0,0,0.3); }
 #gb-dpad .bar.h { left: 0; right: 0; top: 33%; height: 34%; }
@@ -144,8 +149,8 @@ body.gameboy-mode #gameboy { display: block; }
 #gb-interact svg { width: 46%; height: 46%; }
 /* Select and Start: little slanted pills. */
 .gb-pill { position: absolute; border-radius: 999px; transform: translate(-50%, -50%) rotate(-25deg);
-  background: linear-gradient(180deg, #9a93a9, #807890); box-shadow: 0 3px 0 #5f5870, 0 4px 6px rgba(0,0,0,0.25); }
-.gb-pill.down { transform: translate(-50%, -50%) rotate(-25deg) translateY(3px); box-shadow: 0 0 0 #5f5870; }
+  background: linear-gradient(180deg, var(--pill), var(--pill-edge)); box-shadow: 0 3px 0 var(--pill-edge), 0 4px 6px rgba(0,0,0,0.3); }
+.gb-pill.down { transform: translate(-50%, -50%) rotate(-25deg) translateY(3px); box-shadow: 0 0 0 var(--pill-edge); }
 .gb-pill::before { content: ''; position: absolute; inset: -14px; }  /* Easier to hit. */
 </style>
 <script>
@@ -180,7 +185,7 @@ window.gameboy = { active: false, x: 0, y: 0, interact: 0, start: 0, select: 0,
     const pad = document.createElement('div');
     pad.id = 'gameboy';
     pad.innerHTML =
-      '<div id=gb-brand>SURVIVORS</div>' +
+      '<div id=gb-brand>AnnoraBoy</div>' +
       '<div id=gb-stick-zone></div><div id=gb-stick-base><div id=gb-stick-knob></div></div>' +
       '<div id=gb-dpad><div class=\'bar h\'></div><div class=\'bar v\'></div>' +
         '<div class=\'arm up\'></div><div class=\'arm down\'></div><div class=\'arm left\'></div><div class=\'arm right\'></div>' +
@@ -259,17 +264,18 @@ window.gameboy = { active: false, x: 0, y: 0, interact: 0, start: 0, select: 0,
     gb.y = 0;
   }
 
-  const SECTORS = { '0': ['right'], '1': ['right', 'down'], '2': ['down'], '3': ['down', 'left'],
-    '4': ['left'], '-4': ['left'], '-3': ['up', 'left'], '-2': ['up'], '-1': ['up', 'right'] };
-
   function moveDpad(e) {
     const r = el.dpad.getBoundingClientRect();
     const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
     const held = {};
     let primary = '';
-    if (Math.hypot(dx, dy) > r.width * 0.1) {
-      SECTORS[String(Math.round(Math.atan2(dy, dx) / (Math.PI / 4)))].forEach(function (d) { held[d] = true; });
-      primary = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+    if (Math.hypot(dx, dy) > r.width * 0.06) {
+      const ax = Math.abs(dx), ay = Math.abs(dy);
+      const h = dx > 0 ? 'right' : 'left', v = dy > 0 ? 'down' : 'up';
+      primary = ax > ay ? h : v;
+      held[primary] = true;
+      // Only a clearly diagonal press holds two directions.
+      if (Math.min(ax, ay) > Math.max(ax, ay) * 0.65) { held[h] = true; held[v] = true; }
     }
     setDpad(held, primary);
   }
@@ -327,7 +333,7 @@ window.gameboy = { active: false, x: 0, y: 0, interact: 0, start: 0, select: 0,
     zone.style.width = (w * 0.5) + 'px';
     zone.style.height = (padH * 0.5) + 'px';
     // D-pad below it.
-    const dpadSize = Math.min(w * 0.34, padH * 0.36, 170);
+    const dpadSize = Math.min(w * 0.44, padH * 0.42, 210);
     place(el.dpad, w * 0.25, padH * 0.73, dpadSize);
     // Interact on the right.
     const buttonSize = Math.min(w * 0.27, padH * 0.28, 130);
@@ -343,8 +349,8 @@ window.gameboy = { active: false, x: 0, y: 0, interact: 0, start: 0, select: 0,
       place(pill, w * p[1], py);
       place(el[p[0] + '-label'], w * p[1], py + pillW * 0.3 + 6);
     });
-    place(el.brand, w * 0.75, Math.max(10, padH * 0.05));
-    el.brand.style.fontSize = Math.round(Math.min(17, w * 0.038)) + 'px';
+    place(el.brand, w * 0.5, Math.max(8, padH * 0.025));
+    el.brand.style.fontSize = Math.round(Math.min(20, w * 0.048)) + 'px';
   }
 
   window.addEventListener('resize', layout);
