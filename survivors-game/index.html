@@ -93,6 +93,9 @@ body {
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
 <style>
+/* No double-tap zoom, pinch zoom, text selection or tap flashes anywhere. */
+html, body { touch-action: none; -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
 #gameboy { display: none; position: fixed; left: 0; right: 0; bottom: 0; overflow: hidden;
   background: linear-gradient(180deg, #dcd8e4 0%, #c6c1d2 100%);
   box-shadow: inset 0 6px 10px -6px rgba(0,0,0,0.45);
@@ -123,6 +126,22 @@ body.gameboy-mode #gameboy { display: block; }
 </style>
 <script>
 window.gameboy = { active: false, x: 0, y: 0, interact: 0 };
+(function () {
+  // Stop phones from zooming when the controls are tapped quickly
+  // (Safari on iPhone ignores the page's no-zoom setting, so the zoom
+  // gestures themselves are cancelled).
+  const stop = function (e) { if (e.cancelable) e.preventDefault(); };
+  document.addEventListener('dblclick', stop, { passive: false });
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (type) {
+    document.addEventListener(type, stop, { passive: false });
+  });
+  document.addEventListener('touchmove', function (e) { if (e.touches.length > 1 || e.scale !== undefined && e.scale !== 1) stop(e); }, { passive: false });
+  document.addEventListener('touchend', stop, { passive: false });
+  document.addEventListener('DOMContentLoaded', function () {
+    const meta = document.querySelector('meta[name=viewport]');
+    if (meta) meta.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+  });
+})();
 (function () {
   const touch = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || navigator.maxTouchPoints > 0;
   let pad, zone, base, knob, button, label, brand;
