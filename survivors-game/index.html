@@ -102,15 +102,39 @@ html, body { touch-action: none; -webkit-user-select: none; user-select: none;
   touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
 body.gameboy-mode #gameboy { display: block; }
-#gb-brand { position: absolute; left: 0; right: 0; text-align: center; color: #4b3f72;
+.gb-label { position: absolute; pointer-events: none; transform: translateX(-50%); color: #4b3f72; white-space: nowrap;
+  font-weight: 800; letter-spacing: 2px; font-size: 12px; }
+#gb-brand { position: absolute; pointer-events: none; transform: translateX(-50%); color: #4b3f72; white-space: nowrap;
   font-weight: 800; font-style: italic; letter-spacing: 3px; opacity: 0.75; }
-#gb-stick-zone { position: absolute; left: 0; top: 0; bottom: 0; width: 55%; }
-#gb-stick-base { position: absolute; border-radius: 50%; transform: translate(-50%, -50%);
+/* Thumbstick: fixed in the top-left quarter. */
+#gb-stick-zone { position: absolute; left: 0; top: 0; }
+#gb-stick-base { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none;
   background: radial-gradient(circle at 50% 45%, #b9b3c6, #9f98b0);
   box-shadow: inset 0 4px 12px rgba(0,0,0,0.3), 0 2px 0 rgba(255,255,255,0.7); }
 #gb-stick-knob { position: absolute; left: 50%; top: 50%; width: 48%; height: 48%; margin: -24% 0 0 -24%;
   border-radius: 50%; background: radial-gradient(circle at 40% 35%, #5f586e, #2f2a3a);
   box-shadow: 0 5px 8px rgba(0,0,0,0.35); }
+/* D-pad: a plus shape. */
+#gb-dpad { position: absolute; transform: translate(-50%, -50%); }
+#gb-dpad .bar { position: absolute; background: #35303f; border-radius: 7px;
+  box-shadow: 0 5px 0 #1f1b26, 0 8px 12px rgba(0,0,0,0.3); }
+#gb-dpad .bar.h { left: 0; right: 0; top: 33%; height: 34%; }
+#gb-dpad .bar.v { top: 0; bottom: 0; left: 33%; width: 34%; }
+#gb-dpad .arm { position: absolute; width: 34%; height: 34%; border-radius: 7px; }
+#gb-dpad .arm.on { background: rgba(255,255,255,0.16); }
+#gb-dpad .arm::after { content: ''; position: absolute; left: 50%; top: 50%; width: 0; height: 0;
+  border: 7px solid transparent; transform: translate(-50%, -50%); }
+#gb-dpad .arm.up { left: 33%; top: 0; }
+#gb-dpad .arm.up::after { border-bottom: 9px solid #7c7490; border-top-width: 0; }
+#gb-dpad .arm.down { left: 33%; bottom: 0; }
+#gb-dpad .arm.down::after { border-top: 9px solid #7c7490; border-bottom-width: 0; }
+#gb-dpad .arm.left { left: 0; top: 33%; }
+#gb-dpad .arm.left::after { border-right: 9px solid #7c7490; border-left-width: 0; }
+#gb-dpad .arm.right { right: 0; top: 33%; }
+#gb-dpad .arm.right::after { border-left: 9px solid #7c7490; border-right-width: 0; }
+#gb-dpad .dimple { position: absolute; left: 50%; top: 50%; width: 18%; height: 18%; transform: translate(-50%, -50%);
+  border-radius: 50%; background: radial-gradient(circle at 50% 40%, #2a2532, #3d3748); }
+/* Interact: the big round button. */
 #gb-interact { position: absolute; border-radius: 50%; transform: translate(-50%, -50%);
   background: radial-gradient(circle at 40% 35%, #db4677, #a3194b);
   box-shadow: 0 6px 0 #6e0f30, 0 10px 14px rgba(0,0,0,0.3);
@@ -118,14 +142,16 @@ body.gameboy-mode #gameboy { display: block; }
 #gb-interact.down { transform: translate(-50%, -50%) translateY(5px);
   box-shadow: 0 1px 0 #6e0f30, 0 3px 6px rgba(0,0,0,0.3); }
 #gb-interact svg { width: 46%; height: 46%; }
-#gb-interact-label { position: absolute; transform: translateX(-50%); color: #4b3f72;
-  font-weight: 800; letter-spacing: 2px; font-size: 14px; }
-#gb-speaker { position: absolute; right: 9%; bottom: 7%; display: flex; gap: 7px; transform: rotate(-28deg); }
-#gb-speaker span { width: 6px; height: 46px; border-radius: 3px; background: #a49db4;
-  box-shadow: inset 0 2px 3px rgba(0,0,0,0.35); }
+/* Select and Start: little slanted pills. */
+.gb-pill { position: absolute; border-radius: 999px; transform: translate(-50%, -50%) rotate(-25deg);
+  background: linear-gradient(180deg, #9a93a9, #807890); box-shadow: 0 3px 0 #5f5870, 0 4px 6px rgba(0,0,0,0.25); }
+.gb-pill.down { transform: translate(-50%, -50%) rotate(-25deg) translateY(3px); box-shadow: 0 0 0 #5f5870; }
+.gb-pill::before { content: ''; position: absolute; inset: -14px; }  /* Easier to hit. */
 </style>
 <script>
-window.gameboy = { active: false, x: 0, y: 0, interact: 0 };
+window.gameboy = { active: false, x: 0, y: 0, interact: 0, start: 0, select: 0,
+  up: false, down: false, left: false, right: false, primary: '',
+  tap_up: 0, tap_down: 0, tap_left: 0, tap_right: 0 };
 (function () {
   // Stop phones from zooming when the controls are tapped quickly
   // (Safari on iPhone ignores the page's no-zoom setting, so the zoom
@@ -143,34 +169,41 @@ window.gameboy = { active: false, x: 0, y: 0, interact: 0 };
   });
 })();
 (function () {
+  const gb = window.gameboy;
   const touch = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || navigator.maxTouchPoints > 0;
-  let pad, zone, base, knob, button, label, brand;
-  let stickId = null, center = { x: 0, y: 0 }, rest = { x: 0, y: 0 }, reach = 50;
+  const el = {};
+  let stickId = null, center = { x: 0, y: 0 }, reach = 50;
+  let dpadId = null;
+  const buzz = function (ms) { if (navigator.vibrate) navigator.vibrate(ms); };
 
   function build() {
-    pad = document.createElement('div');
+    const pad = document.createElement('div');
     pad.id = 'gameboy';
     pad.innerHTML =
       '<div id=gb-brand>SURVIVORS</div>' +
-      '<div id=gb-stick-zone><div id=gb-stick-base><div id=gb-stick-knob></div></div></div>' +
+      '<div id=gb-stick-zone></div><div id=gb-stick-base><div id=gb-stick-knob></div></div>' +
+      '<div id=gb-dpad><div class=\'bar h\'></div><div class=\'bar v\'></div>' +
+        '<div class=\'arm up\'></div><div class=\'arm down\'></div><div class=\'arm left\'></div><div class=\'arm right\'></div>' +
+        '<div class=dimple></div></div>' +
       '<div id=gb-interact><svg viewBox=\'0 0 24 24\'><path fill=\'#fff\' d=\'M7 11V5.5a1.5 1.5 0 0 1 3 0V10h.5V3.5a1.5 1.5 0 0 1 3 0V10h.5V4.5a1.5 1.5 0 0 1 3 0V11h.5V7.5a1.5 1.5 0 0 1 3 0V15a7 7 0 0 1-7 7h-1a7 7 0 0 1-6.2-3.8L3.6 14.6a1.5 1.5 0 0 1 2.4-1.8z\'/></svg></div>' +
-      '<div id=gb-interact-label>INTERACT</div>' +
-      '<div id=gb-speaker><span></span><span></span><span></span><span></span><span></span><span></span></div>';
+      '<div id=gb-interact-label class=gb-label>INTERACT</div>' +
+      '<div id=gb-select class=gb-pill></div><div id=gb-select-label class=gb-label>SELECT</div>' +
+      '<div id=gb-start class=gb-pill></div><div id=gb-start-label class=gb-label>START</div>';
     document.body.appendChild(pad);
-    zone = document.getElementById('gb-stick-zone');
-    base = document.getElementById('gb-stick-base');
-    knob = document.getElementById('gb-stick-knob');
-    button = document.getElementById('gb-interact');
-    label = document.getElementById('gb-interact-label');
-    brand = document.getElementById('gb-brand');
+    el.pad = pad;
+    ['brand', 'stick-zone', 'stick-base', 'stick-knob', 'dpad', 'interact', 'interact-label',
+     'select', 'select-label', 'start', 'start-label'].forEach(function (id) {
+      el[id] = document.getElementById('gb-' + id);
+    });
+    el.arms = {};
+    ['up', 'down', 'left', 'right'].forEach(function (d) { el.arms[d] = el.dpad.querySelector('.arm.' + d); });
 
+    // Thumbstick: the knob leans toward your thumb from the fixed center.
+    const zone = el['stick-zone'];
     zone.addEventListener('pointerdown', function (e) {
       if (stickId !== null) return;
       stickId = e.pointerId;
       zone.setPointerCapture(stickId);
-      const r = pad.getBoundingClientRect();
-      center = { x: e.clientX - r.left, y: e.clientY - r.top };
-      placeBase(center);
       moveStick(e);
       e.preventDefault();
     });
@@ -178,75 +211,140 @@ window.gameboy = { active: false, x: 0, y: 0, interact: 0 };
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (type) {
       zone.addEventListener(type, function (e) { if (e.pointerId === stickId) releaseStick(); });
     });
-    button.addEventListener('pointerdown', function (e) {
-      window.gameboy.interact += 1;
-      button.classList.add('down');
-      if (navigator.vibrate) navigator.vibrate(12);
+
+    // D-pad: slide your thumb around it; diagonals press two directions.
+    const dpad = el.dpad;
+    dpad.addEventListener('pointerdown', function (e) {
+      if (dpadId !== null) return;
+      dpadId = e.pointerId;
+      dpad.setPointerCapture(dpadId);
+      moveDpad(e);
       e.preventDefault();
     });
-    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (type) {
-      button.addEventListener(type, function () { button.classList.remove('down'); });
+    dpad.addEventListener('pointermove', function (e) { if (e.pointerId === dpadId) moveDpad(e); });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (type) {
+      dpad.addEventListener(type, function (e) { if (e.pointerId === dpadId) { dpadId = null; setDpad({}, ''); } });
+    });
+
+    // Buttons count their presses (the game notices the count change).
+    [['interact', 'interact', 12], ['select', 'select', 8], ['start', 'start', 8]].forEach(function (b) {
+      const button = el[b[0]];
+      button.addEventListener('pointerdown', function (e) {
+        gb[b[1]] += 1;
+        button.classList.add('down');
+        buzz(b[2]);
+        e.preventDefault();
+      });
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (type) {
+        button.addEventListener(type, function () { button.classList.remove('down'); });
+      });
     });
     pad.addEventListener('contextmenu', function (e) { e.preventDefault(); });
   }
 
-  function placeBase(p) { base.style.left = p.x + 'px'; base.style.top = p.y + 'px'; }
-
   function moveStick(e) {
-    const r = pad.getBoundingClientRect();
+    const r = el.pad.getBoundingClientRect();
     let dx = e.clientX - r.left - center.x, dy = e.clientY - r.top - center.y;
     const len = Math.hypot(dx, dy);
     if (len > reach) { dx *= reach / len; dy *= reach / len; }
-    knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
-    window.gameboy.x = dx / reach;
-    window.gameboy.y = dy / reach;
+    el['stick-knob'].style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+    gb.x = dx / reach;
+    gb.y = dy / reach;
   }
 
   function releaseStick() {
     stickId = null;
-    center = rest;
-    placeBase(rest);
-    knob.style.transform = '';
-    window.gameboy.x = 0;
-    window.gameboy.y = 0;
+    el['stick-knob'].style.transform = '';
+    gb.x = 0;
+    gb.y = 0;
+  }
+
+  const SECTORS = { '0': ['right'], '1': ['right', 'down'], '2': ['down'], '3': ['down', 'left'],
+    '4': ['left'], '-4': ['left'], '-3': ['up', 'left'], '-2': ['up'], '-1': ['up', 'right'] };
+
+  function moveDpad(e) {
+    const r = el.dpad.getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+    const held = {};
+    let primary = '';
+    if (Math.hypot(dx, dy) > r.width * 0.1) {
+      SECTORS[String(Math.round(Math.atan2(dy, dx) / (Math.PI / 4)))].forEach(function (d) { held[d] = true; });
+      primary = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+    }
+    setDpad(held, primary);
+  }
+
+  function setDpad(held, primary) {
+    ['up', 'down', 'left', 'right'].forEach(function (d) {
+      gb[d] = !!held[d];
+      el.arms[d].classList.toggle('on', !!held[d]);
+    });
+    if (primary && primary !== gb.primary) {
+      gb['tap_' + primary] += 1;
+      buzz(8);
+    }
+    gb.primary = primary;
+  }
+
+  function place(node, x, y, size) {
+    node.style.left = x + 'px';
+    node.style.top = y + 'px';
+    if (size) node.style.width = node.style.height = size + 'px';
   }
 
   function layout() {
     const canvas = document.getElementById('canvas');
     if (!canvas || !document.body) return;
-    if (!pad) build();
+    if (!el.pad) build();
     const w = window.innerWidth, h = window.innerHeight, dpr = window.devicePixelRatio || 1;
     let screenH = h;
     let on = touch && h > w;
     if (on) {
       // A square screen if there's room, never shorter than 4:3.
-      screenH = Math.round(Math.min(w, h - w * 0.6));
+      screenH = Math.round(Math.min(w, h - w * 0.75));
       if (screenH < w * 0.75) { on = false; screenH = h; }
     }
     document.body.classList.toggle('gameboy-mode', on);
-    window.gameboy.active = on;
+    gb.active = on;
     canvas.style.width = w + 'px';
     canvas.style.height = screenH + 'px';
     const cw = Math.round(w * dpr), ch = Math.round(screenH * dpr);
     if (canvas.width !== cw) canvas.width = cw;
     if (canvas.height !== ch) canvas.height = ch;
-    if (!on) { if (stickId !== null) releaseStick(); return; }
+    if (!on) {
+      if (stickId !== null) releaseStick();
+      return;
+    }
     // Lay out the controller.
     const padH = h - screenH;
-    pad.style.top = screenH + 'px';
-    const stickSize = Math.min(w * 0.38, padH * 0.5, 190);
-    base.style.width = base.style.height = stickSize + 'px';
+    el.pad.style.top = screenH + 'px';
+    // Thumbstick in the top-left quarter.
+    const stickSize = Math.min(w * 0.36, padH * 0.4, 180);
+    center = { x: w * 0.25, y: padH * 0.27 };
+    place(el['stick-base'], center.x, center.y, stickSize);
     reach = stickSize * 0.36;
-    rest = { x: w * 0.27, y: padH * 0.5 };
-    if (stickId === null) { center = rest; placeBase(rest); }
-    const buttonSize = Math.min(w * 0.27, padH * 0.36, 130);
-    button.style.width = button.style.height = buttonSize + 'px';
-    button.style.left = (w * 0.75) + 'px';
-    button.style.top = (padH * 0.46) + 'px';
-    label.style.left = (w * 0.75) + 'px';
-    label.style.top = (padH * 0.46 + buttonSize * 0.5 + 16) + 'px';
-    brand.style.top = Math.max(10, padH * 0.06) + 'px';
-    brand.style.fontSize = Math.round(Math.min(18, w * 0.04)) + 'px';
+    const zone = el['stick-zone'];
+    zone.style.width = (w * 0.5) + 'px';
+    zone.style.height = (padH * 0.5) + 'px';
+    // D-pad below it.
+    const dpadSize = Math.min(w * 0.34, padH * 0.36, 170);
+    place(el.dpad, w * 0.25, padH * 0.73, dpadSize);
+    // Interact on the right.
+    const buttonSize = Math.min(w * 0.27, padH * 0.28, 130);
+    const by = padH * 0.36;
+    place(el.interact, w * 0.75, by, buttonSize);
+    place(el['interact-label'], w * 0.75, by + buttonSize * 0.5 + 14);
+    // Select and Start under it.
+    const pillW = Math.min(w * 0.15, 66), py = padH * 0.78;
+    [['select', 0.62], ['start', 0.86]].forEach(function (p) {
+      const pill = el[p[0]];
+      pill.style.width = pillW + 'px';
+      pill.style.height = (pillW * 0.32) + 'px';
+      place(pill, w * p[1], py);
+      place(el[p[0] + '-label'], w * p[1], py + pillW * 0.3 + 6);
+    });
+    place(el.brand, w * 0.75, Math.max(10, padH * 0.05));
+    el.brand.style.fontSize = Math.round(Math.min(17, w * 0.038)) + 'px';
   }
 
   window.addEventListener('resize', layout);
@@ -274,7 +372,7 @@ window.gameboy = { active: false, x: 0, y: 0, interact: 0 };
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":682460,"index.wasm":38034280},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":694072,"index.wasm":38034280},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
