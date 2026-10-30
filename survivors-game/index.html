@@ -179,6 +179,10 @@ window.gameboy = { active: false, x: 0, y: 0, interact: 0, start: 0, select: 0,
   const el = {};
   let stickId = null, center = { x: 0, y: 0 }, reach = 50;
   let dpadId = null;
+  // While a real controller is in use, the game fills the screen instead
+  // (the game calls this; touching the screen switches back).
+  let controller = false;
+  gb.setController = function (on) { controller = !!on; layout(); };
   const buzz = function (ms) { if (navigator.vibrate) navigator.vibrate(ms); };
 
   function build() {
@@ -306,7 +310,7 @@ window.gameboy = { active: false, x: 0, y: 0, interact: 0, start: 0, select: 0,
     if (!el.pad) build();
     const w = window.innerWidth, h = window.innerHeight, dpr = window.devicePixelRatio || 1;
     let screenH = h;
-    let on = touch && h > w;
+    let on = touch && h > w && !controller;
     if (on) {
       // A square screen if there's room, never shorter than 4:3.
       screenH = Math.round(Math.min(w, h - w * 0.75));
@@ -381,7 +385,7 @@ window.gameboy = { active: false, x: 0, y: 0, interact: 0, start: 0, select: 0,
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":694120,"index.wasm":38034280},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":701788,"index.wasm":38034280},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
