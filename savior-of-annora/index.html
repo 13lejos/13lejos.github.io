@@ -4,35 +4,6 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
 		<title>Savior of Annora</title>
-<script>
-// The game build online still has its old project name built in, and sets the
-// tab title to it when it starts: keep it "Savior of Annora". (Builds made
-// after the rename already use the new name, so this can go when it's updated.)
-new MutationObserver(function () {
-	if (document.title !== "Savior of Annora") document.title = "Savior of Annora";
-}).observe(document.querySelector("title"), { childList: true, characterData: true, subtree: true });
-</script>
-<!--
-  Link previews (Discord, iMessage, Twitter/X, Facebook...): the game's name,
-  a short description and the cover image. Exported with the game, so every
-  new web build keeps them.
--->
-<meta name="description" content="Fight through broken timelines to save Annora. Play free in your browser.">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Savior of Annora">
-<meta property="og:title" content="Savior of Annora">
-<meta property="og:description" content="Fight through broken timelines to save Annora. Play free in your browser.">
-<meta property="og:url" content="https://13lejos.github.io/savior-of-annora/">
-<meta property="og:image" content="https://13lejos.github.io/savior-of-annora/cover.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Savior of Annora: a little orange hero faces Magnus, a horned ember giant, in a stone arena ringed by magma.">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Savior of Annora">
-<meta name="twitter:description" content="Fight through broken timelines to save Annora. Play free in your browser.">
-<meta name="twitter:image" content="https://13lejos.github.io/savior-of-annora/cover.png">
-<meta name="theme-color" content="#5b3fa8">
-
 		<style>
 html, body, #canvas {
 	margin: 0;
@@ -121,6 +92,38 @@ body {
 		</style>
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+<!--
+  Link previews (Discord, iMessage, Twitter/X, Facebook...): the game's name,
+  a short description and the cover image. Exported with the game, so every
+  new web build keeps them.
+-->
+<meta name="description" content="Fight through broken timelines to save Annora. Play free in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Savior of Annora">
+<meta property="og:title" content="Savior of Annora">
+<meta property="og:description" content="Fight through broken timelines to save Annora. Play free in your browser.">
+<meta property="og:url" content="https://13lejos.github.io/savior-of-annora/">
+<meta property="og:image" content="https://13lejos.github.io/savior-of-annora/cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Savior of Annora: a little orange hero faces Magnus, a horned ember giant, in a stone arena ringed by magma.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Savior of Annora">
+<meta name="twitter:description" content="Fight through broken timelines to save Annora. Play free in your browser.">
+<meta name="twitter:image" content="https://13lejos.github.io/savior-of-annora/cover.png">
+<meta name="theme-color" content="#5b3fa8">
+<!--
+  Game Boy-style controller for phones held upright (web version only).
+  This goes in the Web export preset's "Head Include" (html/head_include),
+  with "Canvas Resize Policy" (html/canvas_resize_policy) set to None, since
+  this script sizes the game itself:
+    - landscape, or on a computer: the game fills the whole window;
+    - a touch screen held upright: the game is a screen at the top and a
+      controller fills the rest below: thumbstick (top left), D-pad (bottom
+      left), Interact (right), and Select / Portal / Start. While a real
+      controller is in use, the game fills the whole screen instead.
+  The game reads window.gameboy (see ui/gameboy_bridge.gd).
+-->
 <style>
 /* No double-tap zoom, pinch zoom, text selection or tap flashes anywhere. */
 html, body { touch-action: none; -webkit-user-select: none; user-select: none;
@@ -396,6 +399,7 @@ window.gameboy = { active: false, x: 0, y: 0, interact: 0, start: 0, select: 0,
   setInterval(layout, 1000);  // Catches odd phone resizes that send no event.
 })();
 </script>
+
 	</head>
 	<body>
 		<canvas id="canvas">
@@ -414,7 +418,7 @@ window.gameboy = { active: false, x: 0, y: 0, interact: 0, start: 0, select: 0,
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":748068,"index.wasm":38034280},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":1145352,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
