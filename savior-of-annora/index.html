@@ -112,6 +112,17 @@ body {
 <meta name="twitter:description" content="Fight through broken timelines to save Annora. Play free in your browser.">
 <meta name="twitter:image" content="https://13lejos.github.io/savior-of-annora/cover.png">
 <meta name="theme-color" content="#5b3fa8">
+<script>
+/* Phones close background tabs: save the moment the page is hidden (switching
+   apps, locking the screen...). The game sets window.annoraOnHide while you're
+   playing (survivor_game.gd). */
+(function () {
+  function saveNow() { try { if (window.annoraOnHide) window.annoraOnHide(); } catch (e) {} }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveNow(); });
+  window.addEventListener('pagehide', saveNow);
+  document.addEventListener('freeze', saveNow);
+})();
+</script>
 <!--
   Game Boy-style controller for phones held upright (web version only).
   This goes in the Web export preset's "Head Include" (html/head_include),
@@ -119,8 +130,8 @@ body {
   this script sizes the game itself:
     - landscape, or on a computer: the game fills the whole window;
     - a touch screen held upright: the game is a screen at the top and a
-      controller fills the rest below: thumbstick (top left), D-pad (bottom
-      left), Interact (right), and Select / Portal / Start. While a real
+      controller fills the rest below: D-pad (left; a thumbstick above it
+      when SHOW_STICK is on), Interact (right), and Select / Portal / Start. While a real
       controller is in use, the game fills the whole screen instead.
   The game reads window.gameboy (see ui/gameboy_bridge.gd).
 -->
@@ -209,6 +220,9 @@ window.gameboy = { active: false, x: 0, y: 0, interact: 0, start: 0, select: 0,
   const gb = window.gameboy;
   const touch = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || navigator.maxTouchPoints > 0;
   const el = {};
+  // Testing a D-pad-only controller: the thumbstick is off and the D-pad sits
+  // centered on the left. Set to true to bring the thumbstick back.
+  const SHOW_STICK = false;
   let stickId = null, center = { x: 0, y: 0 }, reach = 50;
   let dpadId = null;
   // While a real controller is in use, the game fills the screen instead
@@ -362,17 +376,24 @@ window.gameboy = { active: false, x: 0, y: 0, interact: 0, start: 0, select: 0,
     // Lay out the controller.
     const padH = h - screenH;
     el.pad.style.top = screenH + 'px';
-    // Thumbstick in the top-left quarter.
-    const stickSize = Math.min(w * 0.36, padH * 0.4, 180);
-    center = { x: w * 0.25, y: padH * 0.27 };
-    place(el['stick-base'], center.x, center.y, stickSize);
-    reach = stickSize * 0.36;
     const zone = el['stick-zone'];
-    zone.style.width = (w * 0.5) + 'px';
-    zone.style.height = (padH * 0.5) + 'px';
-    // D-pad below it.
-    const dpadSize = Math.min(w * 0.44, padH * 0.42, 210);
-    place(el.dpad, w * 0.25, padH * 0.73, dpadSize);
+    zone.style.display = el['stick-base'].style.display = SHOW_STICK ? '' : 'none';
+    if (SHOW_STICK) {
+      // Thumbstick in the top-left quarter, D-pad below it.
+      const stickSize = Math.min(w * 0.36, padH * 0.4, 180);
+      center = { x: w * 0.25, y: padH * 0.27 };
+      place(el['stick-base'], center.x, center.y, stickSize);
+      reach = stickSize * 0.36;
+      zone.style.width = (w * 0.5) + 'px';
+      zone.style.height = (padH * 0.5) + 'px';
+      const dpadSize = Math.min(w * 0.44, padH * 0.42, 210);
+      place(el.dpad, w * 0.25, padH * 0.73, dpadSize);
+    } else {
+      // No thumbstick: the D-pad (which walks too) centered on the left.
+      if (stickId !== null) releaseStick();
+      const dpadSize = Math.min(w * 0.44, padH * 0.5, 230);
+      place(el.dpad, w * 0.25, padH * 0.52, dpadSize);
+    }
     // Interact on the right.
     const buttonSize = Math.min(w * 0.27, padH * 0.28, 130);
     const by = padH * 0.36;
@@ -418,7 +439,7 @@ window.gameboy = { active: false, x: 0, y: 0, interact: 0, start: 0, select: 0,
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":1145352,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":1147368,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
